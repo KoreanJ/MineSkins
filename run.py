@@ -1,4 +1,6 @@
 import sys
+import shutil
+import os
 
 def main(args):
 
@@ -17,6 +19,11 @@ def main(args):
         print('Argument "{0}" is not recognized. Usage: '.format(bad))
         print('\tpython3 run.y [test] [data] [clean] ...')
         print('*'*barrier_len)
+
+    # process command targets
+    if 'clean' in args:
+        shutil.rmtree('data/', ignore_errors=True)
+        os.mkdir('data')
 
 if __name__ == '__main__':
     main(sys.argv[1:])
