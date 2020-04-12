@@ -14,3 +14,10 @@ For Next Week:
 * Single out one site to be used for this project
 * Analyze any available meta data and how effective it could be in this project
 * Document details of the data I'll be using (expected resolution, color ranges, etc.)
+
+
+### April 15, 2020
+Completed Items:
+
+* Found a website to use for scraping Minecraft Skins: https://www.minecraftskins.com/ (The Skindex)
+* Downloaded test skin and was able to show that dimensions are 64 x 64 x 4 (4 color channels)
