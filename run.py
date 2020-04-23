@@ -1,6 +1,10 @@
 import sys
 import shutil
 import os
+import json
+from etl import *
+
+DATA_CONFIG = 'config/data-config.json'
 
 def main(args):
 
@@ -24,6 +28,10 @@ def main(args):
     if 'clean' in args:
         shutil.rmtree('data/', ignore_errors=True)
         os.mkdir('data')
+    if 'data' in args:
+        with open(DATA_CONFIG) as f:
+            cfg = json.load(f)
+        get_data(**cfg)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
