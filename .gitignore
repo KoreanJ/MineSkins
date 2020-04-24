@@ -1,4 +1,4 @@
-*.pdf
-*.doc
-*.docx
-documentation/*
+*
+!.py
+!.json
+!.ipynb

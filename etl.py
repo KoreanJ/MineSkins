@@ -1,7 +1,11 @@
 # imports
 import requests as r
-from bs4 import BeautifulSoup
+import shutil
 import time
+from bs4 import BeautifulSoup
+from urllib.request import Request, urlopen
+from skimage import io
+
 
 def get_profile_links(page_html):
     """
@@ -21,9 +25,9 @@ def get_img_links(num_pages, url):
         url - main website url
     Returns: list of image links
     """
-    assert num_pages <= 50, 'Maximum number of pages to scrape is 50'
+    assert int(num_pages) <= 50, 'Maximum number of pages to scrape is 50'
     assert url != '', 'URL cannot be empty'
-    assert num_pages > 0, 'Cannot scrape negative or 0 pages'
+    assert int(num_pages) > 0, 'Cannot scrape negative or 0 pages'
     assert url[-1] == '/', 'URL must end with "/"'
     
     # data structure for skin images
@@ -37,7 +41,7 @@ def get_img_links(num_pages, url):
     soup = BeautifulSoup(req.text, 'lxml')
 
     # grab profile links on each page
-    for i in range(1, num_pages+1):
+    for i in range(1, int(num_pages)+1):
         profile_links = [url[:-1]+x for x in get_profile_links(BeautifulSoup(r.get(url+str(i)).text, 'lxml'))]
         
         # for each profile obtain image link
@@ -58,11 +62,30 @@ def get_img_links(num_pages, url):
         
     return img_links
 
+def download_images(img_links):
+
+    # clean data folder before downloading skins
+    shutil.rmtree('data/')
+    os.mkdir('data/')
+
+    # write data from image into new files (with delay)
+    i = 0
+    for l in img_links:
+        req = Request(l, headers={'User-Agent': 'Mozilla/5.0'})
+        fname = str(i) + '.png'
+        f1 = open(fname, 'wb')
+        f1.write(urlopen(req).read())
+        f1.close()
+        shutil.move(fname, 'data/')
+        i += 1
+        time.sleep(1)
+
 ###########################################################################################################
 
 # Main method to gather data
 def get_data(**kwargs):
     img_links = get_img_links(kwargs['n_pages'], kwargs['url'])
+    download_images(img_links)
     print('{0} image links obtained.'.format(len(img_links)))
 
 
