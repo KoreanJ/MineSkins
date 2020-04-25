@@ -11,16 +11,19 @@ In addition to the data target, I've also included a target for cleaning the pro
 
 Finally, I have put more effort into studying this data set now that my method for obtaining the skins is more solid. Included in the repository are a few visualization that clearly display the distribution of skins in the obtained data set. This method of analysis was my first approach to understanding what sort of features I could use in the (soon to be implemented GANs).<br>
 
+> Note: After some painful debugging I was able to figure out why each image has 4 dimensions instead of 3. The final "channel" acts as an indicator that determines whether the pixel is completely white or whether the pixel should display the RGB value. Even if a random pixel had the values (255, 0, 0, 0) (RED), it would show as white because the indicator variable is essentially set to False. The range for this variable is the set {0, 255} as there are no other variations of this present. 
+
 ### Completed Tasks
 * Moved Jupyter Notebook code into actual .py files
 * Structured project directory based on template we studied in class
 * Re-wrote method for gathering links and downloading images to be more organized and fluid
 * Completed a few housekeeping items such as adding a `clean` target, automatically moving downloaded images to the proper folder, and creating a requirements.txt file inside my virtual environment
 * Created configuration files
+* Tested images with and without the 4th dimension in order to understand its purpose
 
 
 ### Issues to Address
-* Based on the template skin and sample skin layout, it seems that I won't be able to utilize a consistant method for gathering the skin data. For example, most of the limbs in my sample skin were comprised of the same pixel layout which meant that certain areas of the 64 x 64 skin were left white. Based on my crude method of randomly sampling other skins, it seems that the blank areas on a skin are intended for adding an overlay to any part of the body. Long hair or other clothing such as coats tend to be common overlays which can be seen in the right most parts of this example skin below.
+* 
 
 <img src="https://www.minecraftskins.com/uploads/skins/2020/04/12/diamondtop111-14108874.png?v172" width="100" height="100" class="center">
 
