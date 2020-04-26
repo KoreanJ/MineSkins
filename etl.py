@@ -123,6 +123,26 @@ def get_stats_brightness(body_part):
 
     return brightness
 
+def get_stats_variance(body_part):
+    """
+    Purpose: Compute the variance of each image or piece of image
+    Params:
+        body_part - the skin's body part to analyze (face, torso, full, etc.)
+    Returns: List of variances values across all images in data
+    """
+    assert body_part in C.SUPPORTED_BODY_PARTS, 'Unrecognized body part'
+
+    fnames = os.listdir('./data')
+    variance = []
+    for f in fnames:
+        if body_part == 'face':
+            variance.append(np.var(get_face(f)))
+        elif body_part == 'torso':
+            variance.append(np.var(get_torso(f)))
+
+    return variance
+
+
 
 
 
@@ -153,16 +173,21 @@ def get_stats():
         print('Error - Data directory cannot be empty')
         return
 
+    # get states across all images
     stats = {}
-    # get brightness for each image
     stats['brightness'] = get_stats_brightness('face')
+    stats['variance'] = get_stats_variance('face')
 
     # get saturation for each image
     #stats['saturation'] = get_stats_saturation()
 
-    print('Brightness Distribution\n', '-'*80, '\n', stats['brightness'])
+    # print('Brightness Distribution')
+    # print('-'*100, '\n', stats['brightness'])
 
-    plt.hist(stats['brightness'])
+    plt.hist(stats['variance'], color='green', density=True)
+    plt.title('Variance Distribution')
+    plt.xlabel('Variance')
+    plt.ylabel('Density')
     plt.show()
 
 

@@ -4,14 +4,32 @@
 <b>Author</b>: Nicholas Smith <br>
 <b>Date</b>: April 26, 2020
 
-### Project Update
-Since the last submitted checkpoint, I have primarily focused on polishing my method of gathering Minecraft skins from the internet source and performing a basic analysis of the gathered data set. In checkpoint 1 I didn't have a solidified way to both gather links and download the images, but my project is now capable of running the data target as follows: `python run.py data`. This will gather links to all of the images on a desired number of pages from the source and then download each one into its own PNG file in the data folder. I'm currently working on a solution that includes sending this directory to the DataHub server so that I don't overwhelm the size of my project directory. <br>
+### Tasks for Week 4 (from backlog)
+* Perform basic statistics on images and implement into functions
+    - DONE
+* Start cleaning the skins (i.e. removing bad data and filtering out poor quality skins)
+    - IN PROGRESS
+* If time allows, setup first instance of GAN and start playing around with it
+    - NOT STARTED
 
-In addition to the data target, I've also included a target for cleaning the project directory of all output files using the command `python run.py clean`. There are also a few new checks for correct targets so that if the user tries to run a random target, none of the included targets will be ran and the usage string will be printed out.
+### Completed tasks for Week 4 (not from backlog)
+* Created new target, `data`
+* Created new target, `clean`
+* Created several helper functions in `etl.py` for gathering data and performing statistics
+* Included requirements.txt for working in a virtual environment (had issues with packages after moving from Mac to Windows)
+* Re-structured method of gathering skins. Now runs completely using `data` target
+* Added configuration file for gathering data 
 
-Finally, I have put more effort into studying this data set now that my method for obtaining the skins is more solid. Included in the repository are a few visualization that clearly display the distribution of skins in the obtained data set. This method of analysis was my first approach to understanding what sort of features I could use in the (soon to be implemented GANs).<br>
+### Update since checkpoint 1
+Since the last submitted checkpoint, I have primarily focused on 2 areas: data acquisition and EDA. By the first checkpoint I was able to gather a handful of Minecraft skins from the internet, but there was no solidified way of doing this via a command line. Everything was manually being moved around and renamed. To improve this, I implemented the `data` target which does the following: gathers a list of links to Minecraft skins (based on number of desired web pages configured in data-config.json), read those images into local files, renames them, and moves them to the appropriate directory. <br>
 
-> Note: After some painful debugging I was able to figure out why each image has 4 dimensions instead of 3. The final "channel" acts as an indicator that determines whether the pixel is completely white or whether the pixel should display the RGB value. Even if a random pixel had the values (255, 0, 0, 0) (RED), it would show as white because the indicator variable is essentially set to False. The range for this variable is the set {0, 255} as there are no other variations of this present. 
+In addition to the new data target, I've also implemented a `clean` target for removing output files. No incorrect targets are allowed to be called as my program checks for that and outputs the usage if needed.
+
+### Quality of data
+Each skin has a shape of (64, 64, 4) where the 4 dimensions of each pixel represent R, G, B, and an indicator variable. This was determined empirically since it wasn't clear from the beginning. Minecraft does not provide a thorough explanation of why these use 4 dimensions for each pixel, so I was tasked with figuring this out myself. At first glance I noticed that all of the important pixels (ones that were not empty space and actually pertained to the unwrapped skin) had a 4th dimension value of 255. Since each skin contains a bit of empty space between unwrapped limbs, I checked and confirmed that those empty pixels had a 4th dimension value of 0. This led me to believe that pixels with a 4th dimension value of 255 were truly part of the skin whereas those with 0 were the filler space in between limbs. <br>
+
+### Data cleaning for GAN
+After thinking about the image features that may hinder my results, I developed a very simple method of filtering out "bad" skins. Since I want to make sure that the skins have actual features and are not simply comprised of a single color, I've empirically determined a variance cutoff and use that in filtering down the dataset.
 
 ### Completed Tasks
 * Moved Jupyter Notebook code into actual .py files
