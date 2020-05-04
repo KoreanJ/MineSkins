@@ -190,12 +190,12 @@ def get_data(**kwargs):
     Params:
         **kwargs - parameters passed from data-config.json
     """
-    print('Gathering image links...', end='')
+    print('Gathering image links ... ', end='')
     img_links, tags = get_img_links(kwargs['n_pages'], kwargs['url'])
     print(tags)
     print('Done')
-    print('Downloading images...', end='')
-    #download_images(img_links)
+    print('Downloading images ... ', end='')
+    download_images(img_links)
     print('Done')
     print('{0} skins downloaded from {1}'.format(len(img_links), kwargs['url']))
 
