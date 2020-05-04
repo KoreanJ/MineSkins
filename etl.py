@@ -4,11 +4,14 @@ import shutil
 import time
 import os
 import numpy as np
+import json
 from collections import defaultdict
 from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen
 from skimage import io
 from matplotlib import pyplot as plt
+from selenium import webdriver
+import time
 import constants as C
 
 ### Helper Functions ###
@@ -34,9 +37,19 @@ def get_img_links(num_pages, url):
     assert url != '', 'URL cannot be empty'
     assert int(num_pages) > 0, 'Cannot scrape negative or 0 pages'
     assert url[-1] == '/', 'URL must end with "/"'
+
+    # configure web driver
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')
+    options.add_argument('--log-level=3')
+    driver = webdriver.Chrome(executable_path="C:\\Windows\\chromedriver.exe", options=options)
     
-    # data structure for skin images
+    # data
     img_links = []
+    tags = {}
+
+    # index for tracking meta data
+    i = 0
     
     # connect to website
     req = r.get(url)
@@ -47,17 +60,36 @@ def get_img_links(num_pages, url):
 
     # grab profile links on each page
     for i in range(1, int(num_pages)+1):
-        profile_links = [url[:-1]+x for x in get_profile_links(BeautifulSoup(r.get(url+str(i)).text, 'lxml'))]
+        profile_links = [url[:-1]+x for x in get_profile_links(BeautifulSoup(r.get(url+str(i)).text, 'html.parser'))]
         
         # for each profile obtain image link
         for profile in profile_links:
+
+            # get image tags
+            print(profile)
+            driver.get(profile)
+            html = driver.page_source
+            time.sleep(2)
+            tag_soup = BeautifulSoup(html, 'html.parser')
+            tags_div = tag_soup.find('div', {'class': 'se-tags hide-info'})
+            if tags_div is None:
+                print('Unable to locate tags division')
+                tags[i] = []
+            elif tags_div.find_all('a') is None:
+                print('Unable to find any tags')
+                tags[i] = []
+            else:
+                tags[i] = [x.text for x in tags_div.find_all('a')]
+            i += 1
+
+            # get image link
             req = r.get(profile)
             if req.ok == False:
                 print('# Error accessing the following url:', profile)
                 continue
             
             # parse out image link
-            soup = BeautifulSoup(req.text, 'lxml')
+            soup = BeautifulSoup(req.text, 'html.parser')
             img_link = soup.find('input', {'id': 'image-link-code'}).get('value')
             if img_link is None:
                 print('# Error obtaining image from profile')
@@ -65,7 +97,12 @@ def get_img_links(num_pages, url):
             img_links.append(img_link)
             time.sleep(1)
         
-    return img_links
+    # dump tags into file and close web browser
+    with open('tags.txt', 'w') as f:
+        json.dump(tags, f)
+    driver.close()
+
+    return img_links, tags
 
 def download_images(img_links):
     """
@@ -143,9 +180,6 @@ def get_stats_variance(body_part):
     return variance
 
 
-
-
-
 ###################################################################################################
 
 
@@ -157,10 +191,11 @@ def get_data(**kwargs):
         **kwargs - parameters passed from data-config.json
     """
     print('Gathering image links...', end='')
-    img_links = get_img_links(kwargs['n_pages'], kwargs['url'])
+    img_links, tags = get_img_links(kwargs['n_pages'], kwargs['url'])
+    print(tags)
     print('Done')
     print('Downloading images...', end='')
-    download_images(img_links)
+    #download_images(img_links)
     print('Done')
     print('{0} skins downloaded from {1}'.format(len(img_links), kwargs['url']))
 
