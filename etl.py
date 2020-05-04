@@ -42,7 +42,7 @@ def get_img_links(num_pages, url):
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
     options.add_argument('--log-level=3')
-    driver = webdriver.Chrome(executable_path=os.path.join('.', 'chromedriver.exe', options=options)
+    driver = webdriver.Chrome(executable_path=os.path.join('.', 'chromedriver.exe'), options=options)
     
     # data
     img_links = []
