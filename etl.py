@@ -225,4 +225,10 @@ def get_stats():
     plt.ylabel('Density')
     plt.show()
 
+def test_project():
+    """
+    Test the project using small subset of test data
+    """
+    print('Testing project')
+
 
