@@ -39,10 +39,9 @@ After thinking about the image features that may hinder my results, I developed 
 * Created configuration files
 * Tested images with and without the 4th dimension in order to understand its purpose
 
-
-### Issues to Address
-* 
-
-<img src="https://www.minecraftskins.com/uploads/skins/2020/04/12/diamondtop111-14108874.png?v172" width="100" height="100" class="center">
+### Updated backlog for week 5
+* Start working on elevator pitch for project
+* Continue working on EDA and develop clear pipeline for cleaning/preparing data
+* Ensure by the end of this week data is clearly stored on DataHub and copied to the local repository only as needed
 
 

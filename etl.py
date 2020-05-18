@@ -42,7 +42,7 @@ def get_img_links(num_pages, url):
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
     options.add_argument('--log-level=3')
-    driver = webdriver.Chrome(executable_path=os.path.join('.', 'chromedriver.exe'), options=options)
+    driver = webdriver.Chrome(executable_path=os.path.join('./drivers/', 'chromedriver.exe'), options=options)
     
     # data
     img_links = []
@@ -192,7 +192,7 @@ def get_data(**kwargs):
     """
     print('Gathering image links ... ', end='')
     img_links, tags = get_img_links(kwargs['n_pages'], kwargs['url'])
-    print(tags)
+    #print(tags)
     print('Done')
     print('Downloading images ... ', end='')
     download_images(img_links)
