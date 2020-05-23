@@ -1,0 +1,8 @@
+# create new image from scratch
+FROM ubuntu
+
+MAINTAINER nick smith <nrs003@ucsd.edu>
+
+RUN apt-get update
+
+CMD ["echo", "Hello world!"]
