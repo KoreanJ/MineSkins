@@ -21,7 +21,7 @@ def main(args):
     if not is_correct:
         print('*'*barrier_len)
         print('Argument "{0}" is not recognized. Usage: '.format(bad))
-        print('\tpython3 run.y [test] [data] [clean] ...')
+        print('\tpython3 run.y [test-project] [data] [clean] [stats] ...')
         print('*'*barrier_len)
 
     # process command targets
