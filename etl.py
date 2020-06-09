@@ -9,10 +9,11 @@ from collections import defaultdict
 from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen
 from skimage import io
+from skimage.color import *
 from matplotlib import pyplot as plt
 from selenium import webdriver
+import pandas as pd
 import time
-import constants as C
 
 ### Helper Functions ###
 def get_profile_links(page_html):
@@ -49,7 +50,6 @@ def get_skins(num_pages, url, search=''):
     options.add_argument('--log-level=3')
     driver = webdriver.Chrome(executable_path=os.path.join('', 'drivers', 'chromedriver.exe'), options=options)
     
-    # data to track
     img_links = []       # list of links already found
     tags = {}            # dictionary of image tags (img_num: [tags])
     img_num = 0          # image index
@@ -181,6 +181,90 @@ def get_stats_variance(body_part):
 
     return variance
 
+def process_tags(N=10):
+    """
+    Purpose: Process raw tags to select only the most popular one based on total count and assign new single tag
+    Params:
+        N - use top N popular tags to assign class label for each image (default to 10)
+    Returns:
+        Dataframe of each image name with most popular tag and assigned class
+        Dataframe of each tag and its count
+    """
+    
+    # read tag data
+    fp = os.path.join('.', 'tags.txt')
+    with open(fp) as f:
+        tags_dict = json.load(f)
+
+    # raw list of tags
+    tags = []
+    for key, item in tags_dict.items():
+        if len(item) > 0:
+            tags += item
+
+    # get counts of each tag
+    tag_counts_full = {
+        'tag': []
+        , 'cnt': []
+    }
+    for t1 in tags:
+        if t1 in tag_counts_full['tag']:
+            continue
+        cnt = 0
+        for t2 in tags:
+            if t1.lower() == t2.lower():
+                cnt += 1
+        tag_counts_full['tag'].append(t1)
+        tag_counts_full['cnt'].append(cnt)
+        
+    # create dataframe and sort by most popular
+    tags_df = pd.DataFrame(tag_counts_full)
+    tags_df = tags_df.sort_values(by='cnt', ascending=False).reset_index(drop=True)
+    
+    # select only the most popular tag for each image
+    single_tags = {
+    'img_num': [],
+    'popular_tag': []
+    }
+    for fname, tags in tags_dict.items():
+        if len(tags) == 0:
+            single_tags['img_num'].append(fname)
+            single_tags['popular_tag'].append('no_tags')
+            continue
+
+        # find most popular tag and use that
+        max_tag = tags[0]
+        max_val = tags_df[tags_df['tag'] == max_tag]['cnt'].values[0]
+        for t in tags:
+            val = tags_df[tags_df['tag'] == t]['cnt'].values[0] 
+            if val > max_val:
+                max_tag = t
+                max_val = val
+        single_tags['img_num'].append(fname)
+        single_tags['popular_tag'].append(max_tag)
+        
+    # use top N popular tags to assign class label for each image
+    class_labels = pd.DataFrame(single_tags)
+    top_classes = list(tags_df.loc[:N-1, 'tag'].values)
+    def get_class(x):
+        if x in top_classes or x == 'no_tags':
+            return x
+        return 'other'
+    class_labels['class'] = class_labels['popular_tag'].apply(get_class)
+
+    # map each class to target number (for cluster colors). no_tags = 10 and other = 11
+    target_mapping = {}
+    labels = list(class_labels[~class_labels['class'].isin(['no_tags', 'other'])].groupby('class').count().index)
+    for i in range(len(labels)):
+        target_mapping[labels[i]] = i
+    target_mapping['no_tags'] = i+1
+    target_mapping['other'] = i+2
+    class_labels['target'] = class_labels['class'].apply(lambda x: target_mapping[x])
+
+    
+    # return tag counts and assigned class labels
+    return tags_df, class_labels
+
 
 ###################################################################################################
 
@@ -220,10 +304,79 @@ def get_stats():
     plt.ylabel('Density')
     plt.show()
 
+def save_previews(read_path):
+    """
+    Purpose: For each skin saved in the data directory, parse out the front facing view (face, torso, arms, and legs) and save
+    as a new PNG file.
+    Params:
+        read_path - string represententing the path where data is to be read from
+    Returns: None
+    """
+    write_path = read_path + '_previews'
+
+    # create directory for storing previews
+    if os.path.exists(write_path):
+        os.rename(write_path, write_path + '_del')
+        shutil.rmtree(write_path + '_del')
+    os.mkdir(write_path)
+
+    # create spacers
+    template = io.imread('./front-view-template.png')
+    spacer = template[:8, 20:23, :]
+    spacer_big = template[:12, 20:23, :]
+    
+    read_path += '/'
+    write_path += '/'
+    for i in range(len(os.listdir(read_path))):
+        img = io.imread(read_path+str(i)+'.png')
+        
+        # parse out body parts
+        head = img[8:16,8:16,:]
+        torso = img[20:32, 20:28,:]
+        left_leg = img[52:, 20:24, :]
+        right_leg = img[20:32, 4:8, :]
+        left_arm = img[52:, 36:39, :]
+        right_arm = img[20:32, 44:47, :]
+        
+        # creat front view and save
+        left = np.vstack((np.vstack((spacer, right_arm)), spacer_big))
+        middle = np.vstack((np.vstack((head, torso)), np.hstack((right_leg, left_leg))))
+        right = np.vstack((np.vstack((spacer, left_arm)), spacer_big))
+        full = np.hstack((np.hstack((left, middle)), right))
+        io.imsave(write_path+str(i)+'-preview.png', full)
+
 def test_project():
     """
-    Test the project using small subset of test data
+    Using the small test dataset, perform some basic tag analysis and produce a few visuals.
     """
     print('Testing project')
 
+    # process tags and save to csv files
+    counts, class_labels = process_tags()
+    counts.to_csv('./out/tag-counts.csv', index=False)
+    class_labels.to_csv('./out/tag-data.csv', index=False)
+
+    # create bar charts of top 20 tags
+    plt.figure(figsize=(20,8))
+    plt.bar(counts.iloc[:20, 0], counts.iloc[:20, 1], color='teal')
+    plt.title('Top 20 Most Common Tags on Minecraft Skins')
+    plt.xlabel('Tag')
+    plt.ylabel('Count')
+    plt.savefig('./out/top-20-tags-barchart.png')
+
+    # histogram of mean hue
+    hue = []
+    for i in range(len(os.listdir('./test_data'))):
+        img = io.imread('./test_data/'+str(i)+'.png')
+        hsv = rgb2hsv(img[:, :, :-1])
+        mean_hue = np.mean(hsv[:, :, 0])
+        hue.append(mean_hue)
+    plt.figure(figsize=(14, 10))
+    plt.hist(hue, bins=30, color='teal', density=False)
+    plt.title('Distribution of All Skin\'s Mean Hue')
+    plt.xlabel('Mean Hue')
+    plt.savefig('./out/hue-histogram.png')
+
+    # create front view images for each skin in test dataset
+    save_previews('./test_data')
 
