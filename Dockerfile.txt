@@ -1,4 +1,4 @@
-FROM ucsdets/scipy-ml-notebook:latest
+FROM ucsdets/scipy-ml-notebook:2019.4-stable
 
 LABEL maintainer="Nick Smith <nrs003@ucsd.edu>"
 
